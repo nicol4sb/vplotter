@@ -36,26 +36,6 @@ steppingDualPhaseAnti = [
     [1, 0, 0, 1]
 ]
 
-
-def moveUpOrDown(numberOfTurns, upOrDown):
-    for _ in range(numberOfTurns):
-        # UP - both motors
-        for _ in range(128):
-            for step in range(8):
-                for pin in range(4):
-                    if upOrDown:
-                        GPIO.output(
-                            ControlPinMotor1[pin], steppingDualPhaseAnti[step][pin])
-                        GPIO.output(
-                            ControlPinMotor2[pin], steppingDualPhase[step][pin])
-                    else:
-                        GPIO.output(
-                            ControlPinMotor1[pin], steppingDualPhase[step][pin])
-                        GPIO.output(
-                            ControlPinMotor2[pin], steppingDualPhaseAnti[step][pin])
-                time.sleep(0.0015)
-
-
 def turnMotor(stringLength, rightMotorIfTrueElseLeft):
 
     # calculate number of steps given 25mm perimeter of pulley = 2048 steps
@@ -77,6 +57,7 @@ def turnMotor(stringLength, rightMotorIfTrueElseLeft):
             time.sleep(0.0015)
 
 
+# awful remove asap
 x0=0
 y0=300
 
