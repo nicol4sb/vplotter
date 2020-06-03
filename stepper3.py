@@ -29,24 +29,26 @@ halfSteppinglPhase = [
 # Surely not true, but with 4096 steps, acceptable approximation
 rightMotorCurrentStep = 0
 leftMotorCurrentStep = 0
+currentHalfstep = 0 # this initialization is not too relevant - we will miss a few starting points possibly
 
 def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
 
-    currentHalfstep = 0
+    global currentHalfstep
 
     # rotate
     increment = 1 if numberOfHalfSteps > 0 else -1
     for _ in range(abs(numberOfHalfSteps)):
+
+        currentHalfstep = (currentHalfstep + 8 + increment) % 8 # iterating over the 8 half steps
+
         for pin in range(4):
             GPIO.output(pinsToBeActivated[pin], halfSteppinglPhase[currentHalfstep][pin])
-        currentHalfstep = (currentHalfstep + 8 + increment) % 8 # iterating over the 8 half steps
-        time.sleep(0.0007)
 
-turnMotorByHalfStepping(4096,leftMotorGPIOPins)
-turnMotorByHalfStepping(4096,rightMotorGPIOPins)
-turnMotorByHalfStepping(-4096,leftMotorGPIOPins)
-turnMotorByHalfStepping(-4096,rightMotorGPIOPins)
-setGPIOsAsOutputAndTo0()
+        time.sleep(0.0007)
+        
+        # reset to 0 post move / ok as everything is sequential
+        setGPIOsAsOutputAndTo0()
+
 
 def move(x0, y0, x1,y1):
 
