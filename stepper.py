@@ -80,9 +80,9 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
  
     # implement Bresenham's algo here
     slope = abs(rightSteps/leftSteps)
-    roundedSlope = int(slope) 
+    roundedSlope = int(slope)
 
-    # print(" slope ",slope)
+    # print(" slope ",slope)
     # print(" roundedSlope ",roundedSlope)
 
     deviationPerLoop = abs(slope - roundedSlope)
@@ -100,16 +100,15 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 
         # adjust current deviation if over 1
         if currentDeviation > 1:
-            turnMotorByHalfStepping(roundedSlope if rightSteps>0 else - roundedSlope, rightMotorGPIOPins)
-            currentDeviation -= 1 + deviationPerLoop
-    
-        # print("current deviation", currentDeviation)
+            turnMotorByHalfStepping(1 if rightSteps>0 else -1, rightMotorGPIOPins)
+            currentDeviation -= 1
 
-turnMotors(5, 5)
+# turnMotors(-20, -20)
+# turnMotors(20, 20)
 
 #########################################################
 # distance between the two motors
-distanceBetweenMotors = 290 #mm
+halfDistanceBetweenMotors = 290 #mm
 
 # initial position
 x0 = 0
@@ -122,19 +121,24 @@ def move(x1,y1):
 
     # calculate the distance of string to be rolled per motor
     # turn left motor by ?
-    stringDistanceLeftMotor = math.sqrt(y1**2+(distanceBetweenMotors+x1)**2) - math.sqrt(y0**2+(distanceBetweenMotors+x0)**2)
+    stringDistanceLeftMotor = math.sqrt(y1**2+(halfDistanceBetweenMotors+x1)**2) - math.sqrt(y0**2+(halfDistanceBetweenMotors+x0)**2)
     print("distance left motor : ", stringDistanceLeftMotor)
 
     # turn right motor by ?
-    stringDistanceRightMotor = math.sqrt(y1**2+(distanceBetweenMotors-x1)**2) - math.sqrt(y0**2+(distanceBetweenMotors-x0)**2)
+    stringDistanceRightMotor = math.sqrt(y1**2+(halfDistanceBetweenMotors-x1)**2) - math.sqrt(y0**2+(halfDistanceBetweenMotors-x0)**2)
     print("distance right motor : ", stringDistanceRightMotor)
 
     turnMotors(stringDistanceLeftMotor,stringDistanceRightMotor)
     
     x0,y0 = x1,y1 # update current pen position
+    print("Head now positioned at ",x0,y0)
 #########################################################
 
-# move(50, 290)
-# move(-50, 290)
+move(-40, 330)
+move(40, 330)
+
+# return to base
+move(0, 290)
+
 
 GPIO.cleanup()
