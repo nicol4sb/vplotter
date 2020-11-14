@@ -35,7 +35,7 @@ leftMotorCurrentStep = 0
 def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
 
     # =======================================
-    #TODO learn Python and refactor that properly - likely by building a motor class and passing a motor object
+    #TODO learn Python and refactor that properly - likely by building a motor class and passing an instance
     global rightMotorCurrentStep
     global leftMotorCurrentStep
 
@@ -56,38 +56,30 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
             GPIO.output(pinsToBeActivated[pin], halfSteppinglPhase[currentStep][pin])
     
         # 0.0007 is the lower limit for a halfstep - after that coils dont have time to establish the mag field - maybe?
-        time.sleep(0.0007)
+        time.sleep(0.5007)
         
-    # reset to 0 post move / ok as everything is sequential
-    setGPIOsAsOutputAndTo0()
-
 # test :
-# turnMotorByHalfStepping(+1000,leftMotorGPIOPins)
-# turnMotorByHalfStepping(-100,rightMotorGPIOPins)
+turnMotorByHalfStepping(+20,leftMotorGPIOPins)
+turnMotorByHalfStepping(-20,leftMotorGPIOPins)
+turnMotorByHalfStepping(-20,rightMotorGPIOPins)
+turnMotorByHalfStepping(+20,rightMotorGPIOPins)
 
-pulleyPerimeter = 25 #mm
+# diameter 7.5mm :
+pulleyPerimeter = 23.56 #mm
 def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
     
     leftSteps = int(stringDistanceLeftMotor*4096/pulleyPerimeter)
     rightSteps = int(stringDistanceRightMotor*4096/pulleyPerimeter)
 
     # get around painful edge cases
-    rightSteps = 1 if rightSteps == 0 else rightSteps
     leftSteps = 1 if leftSteps == 0 else leftSteps
-
-    # print("# leftSteps ",leftSteps)
-    # print("# rightSteps ",rightSteps)
- 
+    rightSteps = 1 if rightSteps == 0 else rightSteps
+     
     # implement Bresenham's algo here
     slope = abs(rightSteps/leftSteps)
     roundedSlope = int(slope)
-
-    # print(" slope ",slope)
-    # print(" roundedSlope ",roundedSlope)
-
     deviationPerLoop = abs(slope - roundedSlope)
     currentDeviation = 0
-    
 
     for _ in range(0, abs(leftSteps)):
 
@@ -99,16 +91,15 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
         currentDeviation += deviationPerLoop
 
         # adjust current deviation if over 1
-        if currentDeviation > 1:
+        while currentDeviation > 1:
             turnMotorByHalfStepping(1 if rightSteps>0 else -1, rightMotorGPIOPins)
             currentDeviation -= 1
 
-# turnMotors(-20, -20)
 # turnMotors(20, 20)
 
 #########################################################
 # distance between the two motors
-halfDistanceBetweenMotors = 290 #mm
+halfDistanceBetweenMotors = 285 #mm
 
 # initial position
 x0 = 0
@@ -134,11 +125,10 @@ def move(x1,y1):
     print("Head now positioned at ",x0,y0)
 #########################################################
 
-move(-40, 330)
-move(40, 330)
+# move(-40, 330)
+# move(40, 330)
+# reset to 0 post move / ok as everything is sequential
 
-# return to base
-move(0, 290)
-
+setGPIOsAsOutputAndTo0()
 
 GPIO.cleanup()
