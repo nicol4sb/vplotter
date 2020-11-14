@@ -33,69 +33,89 @@ rightMotorCurrentStep = 0
 leftMotorCurrentStep = 0
 
 def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
+    
+    if numberOfHalfSteps == 0:
+        return
 
     # =======================================
-    #TODO learn Python and refactor that properly - likely by building a motor class and passing an instance
+    #TODO Refactor
     global rightMotorCurrentStep
     global leftMotorCurrentStep
 
     if pinsToBeActivated == rightMotorGPIOPins:
-        currentStep = rightMotorCurrentStep
+        current_step = rightMotorCurrentStep
         rightMotorCurrentStep += numberOfHalfSteps
+
     else:
-        currentStep = leftMotorCurrentStep
+        current_step = leftMotorCurrentStep
         leftMotorCurrentStep += numberOfHalfSteps
     # =======================================
 
     # rotate
-    increment = 1 if numberOfHalfSteps > 0 else -1
+    increment = numberOfHalfSteps/abs(numberOfHalfSteps)
     for _ in range(abs(numberOfHalfSteps)):
 
-        currentStep = (currentStep + 8 + increment) % 8
+        # go through the steps so that a positive number of steps equals a string extension on the pulley
+        current_step = (current_step + 8 - increment) % 8
+        
+        # set pins so the appropriate step is activated
         for pin in range(4):
-            GPIO.output(pinsToBeActivated[pin], halfSteppinglPhase[currentStep][pin])
+            GPIO.output(pinsToBeActivated[pin], halfSteppinglPhase[current_step][pin])
     
         # 0.0007 is the lower limit for a halfstep - after that coils dont have time to establish the mag field - maybe?
-        time.sleep(0.5007)
+        time.sleep(0.007)
         
 # test :
-turnMotorByHalfStepping(+20,leftMotorGPIOPins)
-turnMotorByHalfStepping(-20,leftMotorGPIOPins)
-turnMotorByHalfStepping(-20,rightMotorGPIOPins)
-turnMotorByHalfStepping(+20,rightMotorGPIOPins)
+# 4096 half steps = one full turn
+# turnMotorByHalfStepping(+4096,leftMotorGPIOPins)
+# turnMotorByHalfStepping(-4096,leftMotorGPIOPins)
+# turnMotorByHalfStepping(409,rightMotorGPIOPins)
+turnMotorByHalfStepping(100,leftMotorGPIOPins)
 
-# diameter 7.5mm :
+for _ in range(100):
+    turnMotorByHalfStepping(1,leftMotorGPIOPins)
+
+'''
+# inner diameter where the thread is : 7.5mm :
 pulleyPerimeter = 23.56 #mm
 def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
     
     leftSteps = int(stringDistanceLeftMotor*4096/pulleyPerimeter)
     rightSteps = int(stringDistanceRightMotor*4096/pulleyPerimeter)
 
-    # get around painful edge cases
-    leftSteps = 1 if leftSteps == 0 else leftSteps
-    rightSteps = 1 if rightSteps == 0 else rightSteps
-     
-    # implement Bresenham's algo here
-    slope = abs(rightSteps/leftSteps)
-    roundedSlope = int(slope)
-    deviationPerLoop = abs(slope - roundedSlope)
-    currentDeviation = 0
+    if rightSteps == 0:
+        turnMotorByHalfStepping(leftSteps, leftMotorGPIOPins)
+        return
 
-    for _ in range(0, abs(leftSteps)):
+    # implement Bresenham's algo so we go roughly 
+    # straight between the points
+    # and faster by activating both motors at the same time
+    slope = leftSteps/rightSteps
+    rounded_slope = int(leftSteps/rightSteps)
 
-        # turn left by 1
-        turnMotorByHalfStepping(1 if leftSteps>0 else -1, leftMotorGPIOPins)
+    # turn right one step
+    # turn left by int(slope)
+    # accumulate deviation
+    # while deviation>1 -> take a right step and decrement deviation 
 
-        # turn right by slope
-        turnMotorByHalfStepping(roundedSlope if rightSteps>0 else - roundedSlope, rightMotorGPIOPins)
-        currentDeviation += deviationPerLoop
+    current_deviation = 0
+    for _ in range(0, abs(rightSteps)):
 
-        # adjust current deviation if over 1
-        while currentDeviation > 1:
-            turnMotorByHalfStepping(1 if rightSteps>0 else -1, rightMotorGPIOPins)
-            currentDeviation -= 1
+        # turn right motor by one step
+        turnMotorByHalfStepping(rightSteps/abs(rightSteps), rightMotorGPIOPins)
 
-# turnMotors(20, 20)
+        # turn left by slope
+        turnMotorByHalfStepping(rounded_slope, leftMotorGPIOPins)
+        current_deviation += (slope - rounded_slope)
+
+        # adjust until deviation is < 1 step
+        while current_deviation > 1:
+            turnMotorByHalfStepping(1, rightMotorGPIOPins)
+            current_deviation -= 1
+
+# test : both motors should let go 10mm of string
+# turnMotors(0, +2.356)
+# turnMotors(0, -2.356)
 
 #########################################################
 # distance between the two motors
@@ -129,6 +149,7 @@ def move(x1,y1):
 # move(40, 330)
 # reset to 0 post move / ok as everything is sequential
 
+'''
 setGPIOsAsOutputAndTo0()
 
 GPIO.cleanup()
