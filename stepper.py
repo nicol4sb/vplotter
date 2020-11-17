@@ -107,20 +107,19 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
     current_deviation = 0
     for _ in range(0, abs(rightSteps)):
 
-        step = 1 if rightSteps>0 else -1
         # turn right motor by one step
-        turnMotorByHalfStepping(step, rightMotorGPIOPins)
-        print("Right step ", step)
+        turnMotorByHalfStepping(int(math.copysign(1,rightSteps)), rightMotorGPIOPins)
+        print("Right step ", math.copysign(1,rightSteps))
 
         # turn left by slope
-        turnMotorByHalfStepping(rounded_slope, leftMotorGPIOPins)
-        print("Left step ", rounded_slope)
+        turnMotorByHalfStepping(int(rounded_slope * math.copysign(1,leftSteps)), leftMotorGPIOPins)
+        print("Left step ", rounded_slope * math.copysign(1,leftSteps))
         
         current_deviation += (slope - rounded_slope)
         print("Deviation ", current_deviation)
 
         # adjust until deviation is < 1 step
-        while current_deviation > 1:
+        while current_deviation > 1 :
             turnMotorByHalfStepping(1, rightMotorGPIOPins)
             current_deviation -= 1
             print("Absorbing deviation - current ", current_deviation)
@@ -128,7 +127,7 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 
 # test : both motors should let go 10mm of string
 
-turnMotors(-10, -10)
+turnMotors(5, 3)
 
 # turnMotors(10, -10)
 # turnMotors(-10, 10)
