@@ -70,7 +70,6 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
         time.sleep(0.0007)
         
 # test :
-# 4096 half steps = one full turn
 # turnMotorByHalfStepping(+4,leftMotorGPIOPins)
 # turnMotorByHalfStepping(-3,leftMotorGPIOPins)
 # turnMotorByHalfStepping(+3,rightMotorGPIOPins)
@@ -96,8 +95,8 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
     # implement Bresenham's algo so we go roughly 
     # straight between the points
     # and faster by activating both motors at the same time
-    slope = leftSteps/rightSteps
-    rounded_slope = int(leftSteps/rightSteps)
+    slope = abs(stringDistanceLeftMotor/stringDistanceRightMotor)
+    rounded_slope = int(slope)
 
     # turn right one step
     # turn left by int(slope)
@@ -120,17 +119,14 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 
         # adjust until deviation is < 1 step
         while current_deviation > 1 :
-            turnMotorByHalfStepping(1, rightMotorGPIOPins)
+            turnMotorByHalfStepping(int(math.copysign(1,rightSteps)), rightMotorGPIOPins)
             current_deviation -= 1
             print("Absorbing deviation - current ", current_deviation)
 
 
 # test : both motors should let go 10mm of string
 
-turnMotors(5, 3)
-
-# turnMotors(10, -10)
-# turnMotors(-10, 10)
+turnMotors(-3, 1)
 
 
 #########################################################
