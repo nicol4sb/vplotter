@@ -175,10 +175,22 @@ def move(x1,y1):
 # reset to 0 post move / ok as everything is sequential
 
 
-move(10,285)
+move(13,298)
+move(26,286)
+move(30,285)
+
+move(26,284)
+move(13,282)
 move(0,280)
-move(-10,285)
+
+move(-13,282)
+move(-26,284)
+move(-30,285)
+
+move(-26,286)
+move(-13,298)
 move(0,290)
+
 
 
 setGPIOsAsOutputAndTo0()
