@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+# coding=UTF-8
 import RPi.GPIO as GPIO
 import time, math
 
@@ -108,25 +108,36 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 
         # turn right motor by one step
         turnMotorByHalfStepping(int(math.copysign(1,rightSteps)), rightMotorGPIOPins)
-        print("Right step ", math.copysign(1,rightSteps))
+        # print("Right step ", math.copysign(1,rightSteps))
 
         # turn left by slope
         turnMotorByHalfStepping(int(rounded_slope * math.copysign(1,leftSteps)), leftMotorGPIOPins)
-        print("Left step ", rounded_slope * math.copysign(1,leftSteps))
+        # print("Left step ", rounded_slope * math.copysign(1,leftSteps))
         
         current_deviation += (slope - rounded_slope)
-        print("Deviation ", current_deviation)
+        # print("Deviation ", current_deviation)
 
         # adjust until deviation is < 1 step
         while current_deviation > 1 :
-            turnMotorByHalfStepping(int(math.copysign(1,rightSteps)), rightMotorGPIOPins)
+            turnMotorByHalfStepping(int(math.copysign(1,leftSteps)), leftMotorGPIOPins)
             current_deviation -= 1
-            print("Absorbing deviation - current ", current_deviation)
+            # print("Absorbing deviation - current ", current_deviation, "after left step ", int(math.copysign(1,leftSteps)))
 
 
 # test : both motors should let go 10mm of string
 
-turnMotors(-3, 1)
+# turnMotors(3, 1)
+# turnMotors(1, 3)
+
+# turnMotors(3, -1)
+# turnMotors(1, -3)
+
+# turnMotors(-3, 1)
+# turnMotors(-1, 3)
+
+# turnMotors(-3, -1)
+# turnMotors(-1, -3)
+
 
 
 #########################################################
@@ -141,6 +152,8 @@ def move(x1,y1):
 
     # current pen position :
     global x0, y0
+
+    print("going from ",x0,y0," to ",x1,y1)
 
     # calculate the distance of string to be rolled per motor
     # turn left motor by ?
@@ -160,6 +173,12 @@ def move(x1,y1):
 # move(-40, 330)
 # move(40, 330)
 # reset to 0 post move / ok as everything is sequential
+
+
+move(10,285)
+move(0,280)
+move(-10,285)
+move(0,290)
 
 
 setGPIOsAsOutputAndTo0()
