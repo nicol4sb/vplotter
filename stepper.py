@@ -3,18 +3,20 @@
 import RPi.GPIO as GPIO
 import time, math
 
+from points_file_reader import read_file
+
 GPIO.setmode(GPIO.BOARD)
 
 rightMotorGPIOPins = [15, 13, 11, 7]
 leftMotorGPIOPins = [10, 12, 16, 18]
 
 # set all GPIOs to 0
-def setGPIOsAsOutputAndTo0():
+def set_gpio_as_output_and_to_0():
     for pin in leftMotorGPIOPins, rightMotorGPIOPins:
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, 0)
 
-setGPIOsAsOutputAndTo0()
+set_gpio_as_output_and_to_0()
 
 halfSteppinglPhase = [
     [1, 0, 0, 0],
@@ -27,7 +29,7 @@ halfSteppinglPhase = [
     [1, 1, 0, 0]
 ]
 
-# assume motors are in these positions (out of 8 half steps in a cycle - so possibly off by 4) 
+# assume motors are in these positions (out of 8 half steps in a cycle - so off by 4 at the max)
 # Surely not true, but with 4096 steps, acceptable approximation
 rightMotorCurrentStep = 0
 leftMotorCurrentStep = 0
@@ -170,29 +172,14 @@ def move(x1,y1):
     print("Head now positioned at ",x0,y0)
 #########################################################
 
-# move(-40, 330)
-# move(40, 330)
-# reset to 0 post move / ok as everything is sequential
+# move(13,298)
 
+# for each (x,y) in fileReader.readMoves(file)
+#   move(x,y)
+# DONE
 
-move(13,298)
-move(26,286)
-move(30,285)
+print(read_file())
 
-move(26,284)
-move(13,282)
-move(0,280)
-
-move(-13,282)
-move(-26,284)
-move(-30,285)
-
-move(-26,286)
-move(-13,298)
-move(0,290)
-
-
-
-setGPIOsAsOutputAndTo0()
+set_gpio_as_output_and_to_0()
 
 GPIO.cleanup()
