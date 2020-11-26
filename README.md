@@ -8,6 +8,9 @@ Be it with other motors, cards, GPIO pins.
 
 Essential concepts are transformation of the rotation of the engines into xy coordinates and Bresenham's algorithm to draw lines somewhat straight between points.
 
+Lost your pi on the network?
+$nmap 192.168.1.255/24 
+
 Next on the list :
 Draw a line from a set of manually entered points
 Build the toolchain to transform a picture to a line of points understandable by the python code.

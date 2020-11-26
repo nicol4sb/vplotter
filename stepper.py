@@ -178,7 +178,10 @@ def move(x1,y1):
 #   move(x,y)
 # DONE
 
-print(read_file())
+instructions = read_file()
+for instruction in instructions:
+    move(instruction[0],instruction[1])
+
 
 set_gpio_as_output_and_to_0()
 
