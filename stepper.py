@@ -145,7 +145,7 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 #########################################################
 # distance between the two motors
 halfDistanceBetweenMotors = 285 #mm
-pen_to_wood_bar_vertical_distance = 290 #mm
+pen_to_wood_bar_vertical_distance = 320 #mm
 
 # initial position
 x0 = 0
@@ -175,6 +175,7 @@ def move(x1,y1):
 
 # turnmotors(10,-10)
 
+# Actual execution of code :
 
 instructions = read_file(str(sys.argv[1]))
 
