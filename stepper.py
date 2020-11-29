@@ -145,6 +145,7 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 #########################################################
 # distance between the two motors
 halfDistanceBetweenMotors = 285 #mm
+pen_to_wood_bar_vertical_distance = 290 #mm
 
 # initial position
 x0 = 0
@@ -159,11 +160,11 @@ def move(x1,y1):
 
     # calculate the distance of string to be rolled per motor
     # turn left motor by ?
-    stringDistanceLeftMotor = math.sqrt((290-y1)**2+(halfDistanceBetweenMotors+x1)**2) - math.sqrt((290-y0)**2+(halfDistanceBetweenMotors+x0)**2)
+    stringDistanceLeftMotor = math.sqrt((pen_to_wood_bar_vertical_distance - y1)**2 + (halfDistanceBetweenMotors+x1)**2) - math.sqrt((pen_to_wood_bar_vertical_distance - y0)**2+(halfDistanceBetweenMotors+x0)**2)
     print("distance left motor : ", stringDistanceLeftMotor)
 
     # turn right motor by ?
-    stringDistanceRightMotor = math.sqrt((290-y1)**2+(halfDistanceBetweenMotors-x1)**2) - math.sqrt((290-y0)**2+(halfDistanceBetweenMotors-x0)**2)
+    stringDistanceRightMotor = math.sqrt((pen_to_wood_bar_vertical_distance - y1)**2+(halfDistanceBetweenMotors-x1)**2) - math.sqrt((pen_to_wood_bar_vertical_distance - y0)**2+(halfDistanceBetweenMotors-x0)**2)
     print("distance right motor : ", stringDistanceRightMotor)
 
     turnMotors(stringDistanceLeftMotor,stringDistanceRightMotor)
