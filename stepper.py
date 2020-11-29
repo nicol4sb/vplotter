@@ -160,11 +160,11 @@ def move(x1,y1):
     # calculate the distance of string to be rolled per motor
     # turn left motor by ?
     stringDistanceLeftMotor = math.sqrt(y1**2+(halfDistanceBetweenMotors+x1)**2) - math.sqrt(y0**2+(halfDistanceBetweenMotors+x0)**2)
-    print("distance left motor : ", stringDistanceLeftMotor)
+    # print("distance left motor : ", stringDistanceLeftMotor)
 
     # turn right motor by ?
     stringDistanceRightMotor = math.sqrt(y1**2+(halfDistanceBetweenMotors-x1)**2) - math.sqrt(y0**2+(halfDistanceBetweenMotors-x0)**2)
-    print("distance right motor : ", stringDistanceRightMotor)
+    # print("distance right motor : ", stringDistanceRightMotor)
 
     turnMotors(stringDistanceLeftMotor,stringDistanceRightMotor)
     
@@ -178,10 +178,12 @@ def move(x1,y1):
 #   move(x,y)
 # DONE
 
-instructions = read_file()
-for instruction in instructions:
-    move(instruction[0],instruction[1])
 
+instructions = read_file()
+
+for instruction in instructions:
+    move(instruction[0],instruction[1]+290)
+    
 
 set_gpio_as_output_and_to_0()
 
