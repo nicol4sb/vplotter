@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding=UTF-8
 import RPi.GPIO as GPIO
-import time, math
+import time, math, sys
 
 from points_file_reader import read_file
 
@@ -172,18 +172,13 @@ def move(x1,y1):
     print("Head now positioned at ",x0,y0)
 #########################################################
 
-# move(13,298)
-
-# for each (x,y) in fileReader.readMoves(file)
-#   move(x,y)
-# DONE
+# turnmotors(10,-10)
 
 
-instructions = read_file()
+instructions = read_file(str(sys.argv[1]))
 
 for instruction in instructions:
-    move(instruction[0],instruction[1]+290)
-    
+    move(instruction[0],instruction[1])
 
 set_gpio_as_output_and_to_0()
 

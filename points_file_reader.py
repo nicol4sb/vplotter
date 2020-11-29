@@ -2,10 +2,9 @@
 
 import fileinput
 
-def read_file():
-    filepath = './moto.txt'
+def read_file(file_name):
     
-    with open(filepath) as fp:
+    with open(file_name) as fp:
 
         instructions = []
 
