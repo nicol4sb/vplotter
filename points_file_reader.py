@@ -10,8 +10,8 @@ def read_file(file_name):
 
         line = fp.readline()
         while line:
-            details = line.split(',')
-            if details[0] == "C17":
-                instructions.append([int(details[1]),int(details[2])])
+            details = line.split(' ')
+            if details[0] == "G03":
+                instructions.append([float(details[1][1:]),float(details[2][1:])])
             line = fp.readline()
         return instructions
