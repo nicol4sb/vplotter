@@ -173,7 +173,7 @@ def move(x1,y1):
     print("Head now positioned at ",x0,y0)
 #########################################################
 
-turnmotors(5,10)
+turnMotors(5,10)
 
 # Actual execution of code :
 
