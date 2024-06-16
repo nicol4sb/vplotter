@@ -62,7 +62,7 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
         # go through the steps so that a positive number of steps equals a string extension on the pulley
         current_step = (current_step + 8 + increment) % 8
 
-        # print("Motor ", "right" if (pinsToBeActivated == rightMotorGPIOPins) else "left","current step ", current_step)
+        print("Motor ", "right" if (pinsToBeActivated == rightMotorGPIOPins) else "left","current step ", current_step)
         
         # set pins so the appropriate step is activated
         for pin in range(4):
@@ -72,13 +72,13 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
         time.sleep(0.0007)
         
 # test :
-# turnMotorByHalfStepping(+4,leftMotorGPIOPins)
-# turnMotorByHalfStepping(-3,leftMotorGPIOPins)
-# turnMotorByHalfStepping(+3,rightMotorGPIOPins)
-# turnMotorByHalfStepping(-4,rightMotorGPIOPins)
+turnMotorByHalfStepping(+10,leftMotorGPIOPins)
+turnMotorByHalfStepping(-10,leftMotorGPIOPins)
+turnMotorByHalfStepping(+10,rightMotorGPIOPins)
+turnMotorByHalfStepping(-10,rightMotorGPIOPins)
 
-# turnMotorByHalfStepping(100,rightMotorGPIOPins)
-# turnMotorByHalfStepping(100,leftMotorGPIOPins)
+# turnMotorByHalfStepping(10000,rightMotorGPIOPins)
+# turnMotorByHalfStepping(10000,leftMotorGPIOPins)
 
 
 
@@ -177,10 +177,10 @@ def move(x1,y1):
 
 # Actual execution of code :
 
-instructions = read_file(str(sys.argv[1]))
+# instructions = read_file(str(sys.argv[1]))
 
-for instruction in instructions:
-    move(instruction[0],instruction[1])
+# for instruction in instructions:
+#    move(instruction[0],instruction[1])
 
 set_gpio_as_output_and_to_0()
 
