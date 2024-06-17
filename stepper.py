@@ -4,18 +4,20 @@ import RPi.GPIO as GPIO
 import time, math, sys
 
 from points_file_reader import read_file
-from gpio_utils import set_gpio_as_output_and_to_0
-from motor_control import turnMotorByHalfStepping, leftMotorGPIOPins, rightMotorGPIOPins
+from motor_control import turnMotorByHalfStepping, set_gpio_as_output_and_to_0
+from motor_side import MotorSide  # Import the enum
+
+
 GPIO.setmode(GPIO.BOARD)
 
 set_gpio_as_output_and_to_0()
 
         
 # test :
-turnMotorByHalfStepping(+10,leftMotorGPIOPins)
-turnMotorByHalfStepping(-10,leftMotorGPIOPins)
-turnMotorByHalfStepping(+10,rightMotorGPIOPins)
-turnMotorByHalfStepping(-10,rightMotorGPIOPins)
+turnMotorByHalfStepping(+10,MotorSide.LEFT)
+turnMotorByHalfStepping(-10,MotorSide.LEFT)
+turnMotorByHalfStepping(+10,MotorSide.RIGHT)
+turnMotorByHalfStepping(-10,MotorSide.RIGHT)
 
 # turnMotorByHalfStepping(10000,rightMotorGPIOPins)
 # turnMotorByHalfStepping(10000,leftMotorGPIOPins)
@@ -31,7 +33,7 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
     rightSteps = int(stringDistanceRightMotor*4096/pulleyPerimeter)
 
     if rightSteps == 0:
-        turnMotorByHalfStepping(leftSteps, leftMotorGPIOPins)
+        turnMotorByHalfStepping(leftSteps, MotorSide.LEFT)
         return
 
     # implement Bresenham's algo so we go roughly 
@@ -49,11 +51,11 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
     for _ in range(0, abs(rightSteps)):
 
         # turn right motor by one step
-        turnMotorByHalfStepping(int(math.copysign(1,rightSteps)), rightMotorGPIOPins)
+        turnMotorByHalfStepping(int(math.copysign(1,rightSteps)), MotorSide.RIGHT)
         # print("Right step ", math.copysign(1,rightSteps))
 
         # turn left by slope
-        turnMotorByHalfStepping(int(rounded_slope * math.copysign(1,leftSteps)), leftMotorGPIOPins)
+        turnMotorByHalfStepping(int(rounded_slope * math.copysign(1,leftSteps)), MotorSide.LEFT)
         # print("Left step ", rounded_slope * math.copysign(1,leftSteps))
         
         current_deviation += (slope - rounded_slope)
@@ -61,7 +63,7 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
 
         # adjust until deviation is < 1 step
         while current_deviation > 1 :
-            turnMotorByHalfStepping(int(math.copysign(1,leftSteps)), leftMotorGPIOPins)
+            turnMotorByHalfStepping(int(math.copysign(1,leftSteps)), MotorSide.LEFT)
             current_deviation -= 1
             # print("Absorbing deviation - current ", current_deviation, "after left step ", int(math.copysign(1,leftSteps)))
 
