@@ -17,6 +17,12 @@ Personal notes - forgetful...
 - Low power on the pi will make it look like it's working, but not connect to the network
 - ssh pi@raspberrypi.local # if avahi is configured on the pi - it is on mine
 - Lost your pi on the network? $sudo arp-scan --localnet # My wifi dongle is Edimax
+- not sure what GPIO pins you have on your Pi, where to plug etc - use the command line 
+$ sudo apt install python3-gpiozero
+$ pinout # the output is absolutely awesome :
+
+![alt text](image-1.png)
+
 
 
 Next on the list :

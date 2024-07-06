@@ -69,7 +69,7 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
             GPIO.output(pinsToBeActivated[pin], halfSteppinglPhase[current_step][pin])
     
         # 0.0007 is the lower limit for a halfstep - after that coils dont have time to establish the mag field - maybe?
-        time.sleep(0.0007)
+        time.sleep(0.1007)
         
 # test :
 turnMotorByHalfStepping(+10,leftMotorGPIOPins)
