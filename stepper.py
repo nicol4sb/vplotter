@@ -67,7 +67,7 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
             GPIO.output(pinsToBeActivated[pin], halfSteppinglPhase[current_step][pin])
     
         # 0.0007 is the lower limit for a halfstep - after that coils dont have time to establish the mag field - maybe?
-        time.sleep(0.1007)
+        time.sleep(0.0007)
         
 # test :
 def run_motor_jog_test():
@@ -126,19 +126,7 @@ def turnMotors(stringDistanceLeftMotor, stringDistanceRightMotor):
             # print("Absorbing deviation - current ", current_deviation, "after left step ", int(math.copysign(1,leftSteps)))
 
 
-# test : both motors should let go 10mm of string
 
-# turnMotors(3, 1)
-# turnMotors(1, 3)
-
-# turnMotors(3, -1)
-# turnMotors(1, -3)
-
-# turnMotors(-3, 1)
-# turnMotors(-1, 3)
-
-# turnMotors(-3, -1)
-# turnMotors(-1, -3)
 
 
 
