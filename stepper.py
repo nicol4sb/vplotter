@@ -1,22 +1,20 @@
 #!/usr/bin/python3
 # coding=UTF-8
+# On a real Pi, rename or remove the repo's RPi/ stub folder so
+# `import RPi.GPIO` loads the system module (apt: python3-rpi.gpio).
 import RPi.GPIO as GPIO
 import time, math, sys
-
 from points_file_reader import read_file
-
 GPIO.setmode(GPIO.BOARD)
-
+GPIO.setwarnings(False)
 rightMotorGPIOPins = [15, 13, 11, 7]
 leftMotorGPIOPins = [10, 12, 16, 18]
-
-# set all GPIOs to 0
 def set_gpio_as_output_and_to_0():
-    for pin in leftMotorGPIOPins, rightMotorGPIOPins:
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, 0)
+  for pin_group in (leftMotorGPIOPins, rightMotorGPIOPins):
+      for pin in pin_group:
+          GPIO.setup(pin, GPIO.OUT)
+          GPIO.output(pin, GPIO.LOW)
 
-set_gpio_as_output_and_to_0()
 
 halfSteppinglPhase = [
     [1, 0, 0, 0],
@@ -72,10 +70,12 @@ def turnMotorByHalfStepping(numberOfHalfSteps, pinsToBeActivated):
         time.sleep(0.1007)
         
 # test :
-turnMotorByHalfStepping(+10,leftMotorGPIOPins)
-turnMotorByHalfStepping(-10,leftMotorGPIOPins)
-turnMotorByHalfStepping(+10,rightMotorGPIOPins)
-turnMotorByHalfStepping(-10,rightMotorGPIOPins)
+def run_motor_jog_test():
+  """Small back-and-forth jog on each motor (same as earlier inline tests)."""
+  turnMotorByHalfStepping(+10, leftMotorGPIOPins)
+  turnMotorByHalfStepping(-10, leftMotorGPIOPins)
+  turnMotorByHalfStepping(+10, rightMotorGPIOPins)
+  turnMotorByHalfStepping(-10, rightMotorGPIOPins)
 
 # turnMotorByHalfStepping(10000,rightMotorGPIOPins)
 # turnMotorByHalfStepping(10000,leftMotorGPIOPins)
@@ -182,6 +182,19 @@ def move(x1,y1):
 # for instruction in instructions:
 #    move(instruction[0],instruction[1])
 
-set_gpio_as_output_and_to_0()
+def main():
+    try:
+        set_gpio_as_output_and_to_0()
+        if len(sys.argv) >= 2 and sys.argv[1] != "test":
+            path = sys.argv[1]
+            instructions = read_file(path)
+            for instruction in instructions:
+                move(instruction[0], instruction[1])
+        else:
+            run_motor_jog_test()
+    finally:
+        GPIO.cleanup()
 
-GPIO.cleanup()
+
+if __name__ == "__main__":
+    main()

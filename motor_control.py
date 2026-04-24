@@ -60,8 +60,9 @@ def turnMotorByHalfStepping(numberOfHalfSteps, motorSide):
         print("Motor ", "right" if (motorSide == MotorSide.RIGHT) else "left","current step ", current_step)
         
         # set pins so the appropriate step is activated
-        for pin in range(4):
-            GPIO.output(motorSide == __rightMotorGPIOPins[pin] if MotorSide.RIGHT else __leftMotorGPIOPins[pin], __halfSteppinglPhase[current_step][pin])
+        pins_to_activate = __rightMotorGPIOPins if motorSide == MotorSide.RIGHT else __leftMotorGPIOPins
+        for i, gpio_pin in enumerate(pins_to_activate):
+            GPIO.output(gpio_pin, __halfSteppinglPhase[current_step][i])
     
         # 0.0007 is the lower limit for a halfstep - after that coils dont have time to establish the mag field - maybe?
         time.sleep(0.0007)
