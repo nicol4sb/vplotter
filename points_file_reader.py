@@ -1,17 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
-import fileinput
 
 def read_file(file_name):
-    
+    instructions = []
     with open(file_name) as fp:
-
-        instructions = []
-
-        line = fp.readline()
-        while line:
-            details = line.split(' ')
-            if details[0] == "G03":
-                instructions.append([float(details[1][1:]),float(details[2][1:])])
-            line = fp.readline()
-        return instructions
+        for line in fp:
+            parts = line.split()
+            if len(parts) < 3 or parts[0] != "G03":
+                continue
+            instructions.append([float(parts[1][1:]), float(parts[2][1:])])
+    return instructions
