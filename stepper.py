@@ -8,12 +8,22 @@ On a Raspberry Pi, rename or remove the repo's RPi/ stub package so
 """
 from __future__ import annotations
 
+import logging
 import math
+import os
 import sys
 import time
 
 import RPi.GPIO as GPIO
 
+log = logging.getLogger(__name__)
+
+from geometry import (
+    HALF_DISTANCE_BETWEEN_MOTORS_MM,
+    PEN_TO_BAR_VERTICAL_DISTANCE_MM,
+    left_string_length_mm,
+    right_string_length_mm,
+)
 from points_file_reader import read_file
 
 # --- GPIO (BOARD numbering: physical header pins) ---
@@ -32,13 +42,8 @@ HALF_STEPS_PER_SHAFT_REV = 4096
 # String contact circle on the pulley (~7.5 mm ID -> circumference in mm).
 PULLEY_PERIMETER_MM = 23.56
 
-# Print every half-step (very noisy during long moves).
-VERBOSE_HALF_STEPS = True
-
-# --- Plotter frame (mm): origin and Y axis per your mechanical layout ---
-
-HALF_DISTANCE_BETWEEN_MOTORS_MM = 285
-PEN_TO_BAR_VERTICAL_DISTANCE_MM = 320
+# Logging: default INFO (per-move only). Half-steps are DEBUG.
+# Override: VPLOTTER_LOG=debug|info|warning|error
 
 # Current pen position (updated by move()).
 x0 = 0.0
@@ -100,8 +105,7 @@ def turn_motor_half_steps(count: int, pins: list[int]) -> None:
 
     for _ in range(abs(count)):
         phase = (phase + 8 + step) % 8
-        if VERBOSE_HALF_STEPS:
-            print("Motor", label, "phase", phase)
+        log.debug("Motor %s phase %s", label, phase)
         for wire in range(4):
             GPIO.output(pins[wire], HALF_STEP_PHASES[phase][wire])
         time.sleep(HALF_STEP_DELAY_SEC)
@@ -136,27 +140,17 @@ def turn_motors(left_mm: float, right_mm: float) -> None:
             deviation -= 1
 
 
-def _left_string_length_mm(x: float, y: float) -> float:
-    dy = PEN_TO_BAR_VERTICAL_DISTANCE_MM - y
-    return math.hypot(dy, HALF_DISTANCE_BETWEEN_MOTORS_MM + x)
-
-
-def _right_string_length_mm(x: float, y: float) -> float:
-    dy = PEN_TO_BAR_VERTICAL_DISTANCE_MM - y
-    return math.hypot(dy, HALF_DISTANCE_BETWEEN_MOTORS_MM - x)
-
-
 def move(x1: float, y1: float) -> None:
     global x0, y0
 
-    print("going from", x0, y0, "to", x1, y1)
+    log.info("Move: (%.4f, %.4f) -> (%.4f, %.4f)", x0, y0, x1, y1)
 
-    d_left = _left_string_length_mm(x1, y1) - _left_string_length_mm(x0, y0)
-    d_right = _right_string_length_mm(x1, y1) - _right_string_length_mm(x0, y0)
+    d_left = left_string_length_mm(x1, y1) - left_string_length_mm(x0, y0)
+    d_right = right_string_length_mm(x1, y1) - right_string_length_mm(x0, y0)
 
     turn_motors(d_left, d_right)
     x0, y0 = x1, y1
-    print("Head now positioned at", x0, y0)
+    log.info("At: (%.4f, %.4f)", x0, y0)
 
 
 # --- Built-in tests ---
@@ -193,7 +187,10 @@ def _print_usage() -> None:
         f"  {prog}              # jog test\n"
         f"  {prog} test         # jog test\n"
         f"  {prog} rev          # full revolution + reverse, each motor\n"
-        f"  {prog} file.ngc     # run G03 points from file\n",
+        f"  {prog} file.ngc     # run G03 points from file\n"
+        f"\n"
+        f"  VPLOTTER_LOG=debug   # log every half-step (very verbose)\n"
+        f"  VPLOTTER_LOG=warning # only warnings/errors\n",
         file=sys.stderr,
     )
 
