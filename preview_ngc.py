@@ -70,7 +70,6 @@ def main() -> None:
 
     xs: list[float] = [0.0]
     ys: list[float] = [0.0]
-    x0, y0 = 0.0, 0.0
 
     for x1, y1 in points:
         xs.append(x1)
@@ -80,7 +79,6 @@ def main() -> None:
         fig.canvas.draw()
         fig.canvas.flush_events()
         plt.pause(args.delay)
-        x0, y0 = x1, y1
 
     plt.ioff()
     if args.hold > 0:

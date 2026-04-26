@@ -1,22 +1,17 @@
 #!/usr/bin/python3
 # coding=UTF-8
 """
-V-plotter: XY targets -> left/right string length deltas -> half-stepped 28BYJ-48 motors.
+V-plotter: XY targets -> left/right string deltas -> half-stepped 28BYJ-48.
 
-On a Raspberry Pi, rename or remove the repo's RPi/ stub package so
-`import RPi.GPIO` resolves to the system module (apt: python3-rpi.gpio).
+On a Pi, rename/remove the repo's RPi/ stub so `import RPi.GPIO` loads the system module.
 """
 from __future__ import annotations
 
-import logging
 import math
-import os
 import sys
 import time
 
 import RPi.GPIO as GPIO
-
-log = logging.getLogger(__name__)
 
 from geometry import (
     HALF_DISTANCE_BETWEEN_MOTORS_MM,
@@ -26,30 +21,18 @@ from geometry import (
 )
 from points_file_reader import read_file
 
-# --- GPIO (BOARD numbering: physical header pins) ---
-
+# --- Pins (BOARD numbering) ---
 RIGHT_MOTOR_PINS = [15, 13, 11, 7]
 LEFT_MOTOR_PINS = [10, 12, 16, 18]
 
-# --- Timing / mechanics ---
-
-# Delay after each half-step (coils need time to settle; too low = missed steps).
+# --- Mechanics ---
 HALF_STEP_DELAY_SEC = 0.0007
-
-# 28BYJ-48 + gearbox: commonly ~4096 half-steps per output-shaft revolution (approximate).
 HALF_STEPS_PER_SHAFT_REV = 4096
-
-# String contact circle on the pulley (~7.5 mm ID -> circumference in mm).
 PULLEY_PERIMETER_MM = 23.56
 
-# Logging: default INFO (per-move only). Half-steps are DEBUG.
-# Override: VPLOTTER_LOG=debug|info|warning|error
-
-# Current pen position (updated by move()).
+# Pen state (mm, same frame as geometry.py)
 x0 = 0.0
 y0 = 0.0
-
-# --- Half-step sequence (8 phases, 4 wires) ---
 
 HALF_STEP_PHASES = [
     [1, 0, 0, 0],
@@ -62,9 +45,8 @@ HALF_STEP_PHASES = [
     [1, 1, 0, 0],
 ]
 
-# Best-effort phase index per motor (0..7); real rotor may differ slightly on power-up.
-_right_motor_phase = 0
-_left_motor_phase = 0
+_phase_right = 0
+_phase_left = 0
 
 
 def configure_gpio() -> None:
@@ -72,56 +54,50 @@ def configure_gpio() -> None:
     GPIO.setwarnings(False)
 
 
-configure_gpio()
-
-
 def reset_outputs_low() -> None:
-    for pin_group in (LEFT_MOTOR_PINS, RIGHT_MOTOR_PINS):
-        for pin in pin_group:
+    for group in (LEFT_MOTOR_PINS, RIGHT_MOTOR_PINS):
+        for pin in group:
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, GPIO.LOW)
 
 
-def _is_right_motor(pins: list[int]) -> bool:
-    return pins is RIGHT_MOTOR_PINS
+def _motor_side(pins: list[int]) -> str:
+    return "right" if pins is RIGHT_MOTOR_PINS else "left"
 
 
 def turn_motor_half_steps(count: int, pins: list[int]) -> None:
-    """Step one motor by `count` half-steps (+ extends string per your wiring / phase table)."""
-    global _right_motor_phase, _left_motor_phase
+    """+count = extend string (per your wiring / phase table)."""
+    global _phase_right, _phase_left
 
     if count == 0:
         return
 
-    if _is_right_motor(pins):
-        phase = _right_motor_phase
-        _right_motor_phase += count
+    if _motor_side(pins) == "right":
+        phase = _phase_right
+        _phase_right += count
     else:
-        phase = _left_motor_phase
-        _left_motor_phase += count
+        phase = _phase_left
+        _phase_left += count
 
     step = 1 if count > 0 else -1
-    label = "right" if _is_right_motor(pins) else "left"
+    side = _motor_side(pins)
 
     for _ in range(abs(count)):
         phase = (phase + 8 + step) % 8
-        log.debug("Motor %s phase %s", label, phase)
-        for wire in range(4):
-            GPIO.output(pins[wire], HALF_STEP_PHASES[phase][wire])
+        # print("Motor", side, "phase", phase)  # very chatty: every half-step
+        for w in range(4):
+            GPIO.output(pins[w], HALF_STEP_PHASES[phase][w])
         time.sleep(HALF_STEP_DELAY_SEC)
 
 
-def string_delta_mm_to_half_steps(delta_mm: float) -> int:
+def mm_to_half_steps(delta_mm: float) -> int:
     return int(delta_mm * HALF_STEPS_PER_SHAFT_REV / PULLEY_PERIMETER_MM)
 
 
 def turn_motors(left_mm: float, right_mm: float) -> None:
-    """
-    Interleave left/right half-steps (Bresenham-style) so both spools move together
-    for diagonal-ish motion in string space.
-    """
-    left_steps = string_delta_mm_to_half_steps(left_mm)
-    right_steps = string_delta_mm_to_half_steps(right_mm)
+    """Bresenham-style interleaving so both spools move together in string space."""
+    left_steps = mm_to_half_steps(left_mm)
+    right_steps = mm_to_half_steps(right_mm)
 
     if right_steps == 0:
         turn_motor_half_steps(left_steps, LEFT_MOTOR_PINS)
@@ -129,99 +105,92 @@ def turn_motors(left_mm: float, right_mm: float) -> None:
 
     slope = abs(left_mm / right_mm)
     rounded = int(slope)
-    deviation = 0.0
+    err = 0.0
+    sgn_r = int(math.copysign(1, right_steps))
+    sgn_l = int(math.copysign(1, left_steps))
 
     for _ in range(abs(right_steps)):
-        turn_motor_half_steps(int(math.copysign(1, right_steps)), RIGHT_MOTOR_PINS)
-        turn_motor_half_steps(int(rounded * math.copysign(1, left_steps)), LEFT_MOTOR_PINS)
-        deviation += slope - rounded
-        while deviation > 1:
-            turn_motor_half_steps(int(math.copysign(1, left_steps)), LEFT_MOTOR_PINS)
-            deviation -= 1
+        turn_motor_half_steps(sgn_r, RIGHT_MOTOR_PINS)
+        turn_motor_half_steps(int(rounded * sgn_l), LEFT_MOTOR_PINS)
+        err += slope - rounded
+        while err > 1:
+            turn_motor_half_steps(sgn_l, LEFT_MOTOR_PINS)
+            err -= 1
 
 
 def move(x1: float, y1: float) -> None:
     global x0, y0
 
-    log.info("Move: (%.4f, %.4f) -> (%.4f, %.4f)", x0, y0, x1, y1)
-
-    d_left = left_string_length_mm(x1, y1) - left_string_length_mm(x0, y0)
-    d_right = right_string_length_mm(x1, y1) - right_string_length_mm(x0, y0)
-
-    turn_motors(d_left, d_right)
+    print("Move:", (x0, y0), "->", (x1, y1))
+    dL = left_string_length_mm(x1, y1) - left_string_length_mm(x0, y0)
+    dR = right_string_length_mm(x1, y1) - right_string_length_mm(x0, y0)
+    turn_motors(dL, dR)
     x0, y0 = x1, y1
-    log.info("At: (%.4f, %.4f)", x0, y0)
+    print("At:", (x0, y0))
 
 
 # --- Built-in tests ---
-
 JOG_HALF_STEPS = 10
 FULL_REV_HALF_STEPS = HALF_STEPS_PER_SHAFT_REV
 
 
 def run_motor_jog_test() -> None:
-    """Short back-and-forth jog on each motor."""
-    turn_motor_half_steps(+JOG_HALF_STEPS, LEFT_MOTOR_PINS)
-    turn_motor_half_steps(-JOG_HALF_STEPS, LEFT_MOTOR_PINS)
-    turn_motor_half_steps(+JOG_HALF_STEPS, RIGHT_MOTOR_PINS)
-    turn_motor_half_steps(-JOG_HALF_STEPS, RIGHT_MOTOR_PINS)
+    for pins in (LEFT_MOTOR_PINS, RIGHT_MOTOR_PINS):
+        turn_motor_half_steps(+JOG_HALF_STEPS, pins)
+        turn_motor_half_steps(-JOG_HALF_STEPS, pins)
 
 
 def run_full_revolution_test() -> None:
-    """One shaft revolution each motor forward then back (sanity / mechanical check)."""
-    turn_motor_half_steps(FULL_REV_HALF_STEPS, RIGHT_MOTOR_PINS)
-    turn_motor_half_steps(-FULL_REV_HALF_STEPS, RIGHT_MOTOR_PINS)
-    turn_motor_half_steps(FULL_REV_HALF_STEPS, LEFT_MOTOR_PINS)
-    turn_motor_half_steps(-FULL_REV_HALF_STEPS, LEFT_MOTOR_PINS)
+    for pins in (RIGHT_MOTOR_PINS, LEFT_MOTOR_PINS):
+        turn_motor_half_steps(FULL_REV_HALF_STEPS, pins)
+        turn_motor_half_steps(-FULL_REV_HALF_STEPS, pins)
 
 
 def run_from_ngc(path: str) -> None:
-    for xy in read_file(path):
-        move(xy[0], xy[1])
+    for x, y in read_file(path):
+        move(x, y)
 
 
-def _print_usage() -> None:
+def _usage() -> None:
     prog = sys.argv[0] if sys.argv else "stepper.py"
     print(
         f"Usage:\n"
-        f"  {prog}              # jog test\n"
-        f"  {prog} test         # jog test\n"
-        f"  {prog} rev          # full revolution + reverse, each motor\n"
-        f"  {prog} file.ngc     # run G03 points from file\n"
-        f"\n"
-        f"  VPLOTTER_LOG=debug   # log every half-step (very verbose)\n"
-        f"  VPLOTTER_LOG=warning # only warnings/errors\n",
+        f"  {prog} [test|rev|file.ngc]\n"
+        f"  VPLOTTER_LOG=debug|info|warning|error\n",
         file=sys.stderr,
     )
 
 
 def main() -> None:
-    configure_gpio()
     try:
         reset_outputs_low()
-        if len(sys.argv) >= 2:
-            arg = sys.argv[1]
-            if arg in ("-h", "--help"):
-                _print_usage()
-                return
-            if arg == "test":
-                run_motor_jog_test()
-            elif arg == "rev":
-                run_full_revolution_test()
-            else:
-                run_from_ngc(arg)
-        else:
+        argv = sys.argv[1:]
+        if not argv:
             run_motor_jog_test()
+            return
+        cmd = argv[0]
+        if cmd in ("-h", "--help"):
+            _usage()
+            return
+        if cmd == "test":
+            run_motor_jog_test()
+        elif cmd == "rev":
+            run_full_revolution_test()
+        else:
+            run_from_ngc(cmd)
     finally:
         GPIO.cleanup()
 
 
-# Backwards-compatible names for interactive / one-off scripts
+# Legacy names
 set_gpio_as_output_and_to_0 = reset_outputs_low
 turnMotorByHalfStepping = turn_motor_half_steps
 turnMotors = turn_motors
+string_delta_mm_to_half_steps = mm_to_half_steps
 rightMotorGPIOPins = RIGHT_MOTOR_PINS
 leftMotorGPIOPins = LEFT_MOTOR_PINS
+
+configure_gpio()
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,13 @@
 #!/usr/bin/python3
+from __future__ import annotations
 
 
-def read_file(file_name):
-    instructions = []
-    with open(file_name) as fp:
+def read_file(path: str) -> list[list[float]]:
+    out: list[list[float]] = []
+    with open(path) as fp:
         for line in fp:
-            parts = line.split()
-            if len(parts) < 3 or parts[0] != "G03":
+            p = line.split()
+            if len(p) < 3 or p[0] != "G03":
                 continue
-            instructions.append([float(parts[1][1:]), float(parts[2][1:])])
-    return instructions
+            out.append([float(p[1][1:]), float(p[2][1:])])
+    return out
