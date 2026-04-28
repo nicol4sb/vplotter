@@ -13,12 +13,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-from geometry import (
-    HALF_DISTANCE_BETWEEN_MOTORS_MM,
-    PEN_TO_BAR_VERTICAL_DISTANCE_MM,
-    left_string_length_mm,
-    right_string_length_mm,
-)
+from geometry import left_string_length_mm, right_string_length_mm
 from points_file_reader import read_file
 
 # --- Pins (BOARD numbering) ---
@@ -146,22 +141,36 @@ def run_full_revolution_test() -> None:
         turn_motor_half_steps(-FULL_REV_HALF_STEPS, pins)
 
 
+def _prompt_before_return_home() -> None:
+    print(
+        "Drawing finished. Remove or lift the pen, then press Enter "
+        "to return to (0, 0).",
+        flush=True,
+    )
+    if sys.stdin.isatty():
+        input()
+    else:
+        print("(No TTY — waiting 15 s, then returning home.)", flush=True)
+        time.sleep(15)
+
+
 def run_from_ngc(path: str) -> None:
     for x, y in read_file(path):
         move(x, y)
+    _prompt_before_return_home()
+    move(0.0, 0.0)
 
 
 def _usage() -> None:
     prog = sys.argv[0] if sys.argv else "stepper.py"
-    print(
-        f"Usage:\n"
-        f"  {prog} [test|rev|file.ngc]\n"
-        f"  VPLOTTER_LOG=debug|info|warning|error\n",
-        file=sys.stderr,
-    )
+    print(f"Usage: {prog} [test|rev|file.ngc]\n", file=sys.stderr)
 
 
 def main() -> None:
+    actions = {
+        "test": run_motor_jog_test,
+        "rev": run_full_revolution_test,
+    }
     try:
         reset_outputs_low()
         argv = sys.argv[1:]
@@ -172,12 +181,11 @@ def main() -> None:
         if cmd in ("-h", "--help"):
             _usage()
             return
-        if cmd == "test":
-            run_motor_jog_test()
-        elif cmd == "rev":
-            run_full_revolution_test()
-        else:
-            run_from_ngc(cmd)
+        action = actions.get(cmd)
+        if action is not None:
+            action()
+            return
+        run_from_ngc(cmd)
     finally:
         GPIO.cleanup()
 

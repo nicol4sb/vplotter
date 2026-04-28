@@ -10,8 +10,20 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 
 from points_file_reader import read_file
+
+
+def _prompt_before_return_home() -> None:
+    print(
+        "Preview: path done. Press Enter to animate return to (0, 0).",
+        flush=True,
+    )
+    if sys.stdin.isatty():
+        input()
+    else:
+        time.sleep(2)
 
 
 def main() -> None:
@@ -79,6 +91,17 @@ def main() -> None:
         fig.canvas.draw()
         fig.canvas.flush_events()
         plt.pause(args.delay)
+
+    _prompt_before_return_home()
+
+    # Back to origin (matches stepper.run_from_ngc)
+    xs.append(0.0)
+    ys.append(0.0)
+    path_line.set_data(xs, ys)
+    ax.scatter([0.0], [0.0], s=8, c="green", alpha=0.9, zorder=5)
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+    plt.pause(args.delay)
 
     plt.ioff()
     if args.hold > 0:
