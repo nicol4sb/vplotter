@@ -59,8 +59,8 @@ def main() -> None:
         print("No G03 points found.", file=sys.stderr)
         sys.exit(1)
 
-    all_x = [0.0] + [p[0] for p in points]
-    all_y = [0.0] + [p[1] for p in points]
+    all_x = [p[0] for p in points]
+    all_y = [p[1] for p in points]
     margin = max(5.0, 0.05 * (max(all_x) - min(all_x) or 1))
     margin_y = max(5.0, 0.05 * (max(all_y) - min(all_y) or 1))
 
@@ -73,15 +73,15 @@ def main() -> None:
     ax.set_xlim(min(all_x) - margin, max(all_x) + margin)
     ax.set_ylim(min(all_y) - margin_y, max(all_y) + margin_y)
 
-    (path_line,) = ax.plot([0.0], [0.0], color="tab:blue", linewidth=0.9, label="path")
-    ax.scatter([0.0], [0.0], s=12, c="green", zorder=5, label="start")
+    (path_line,) = ax.plot([], [], color="tab:blue", linewidth=0.9, label="path")
+    ax.scatter([points[0][0]], [points[0][1]], s=12, c="green", zorder=5, label="start")
     ax.legend(loc="upper right", fontsize=8)
 
     plt.ion()
     plt.show()
 
-    xs: list[float] = [0.0]
-    ys: list[float] = [0.0]
+    xs: list[float] = []
+    ys: list[float] = []
 
     for x1, y1 in points:
         xs.append(x1)
@@ -92,16 +92,7 @@ def main() -> None:
         fig.canvas.flush_events()
         plt.pause(args.delay)
 
-    _prompt_before_return_home()
-
-    # Back to origin (matches stepper.run_from_ngc)
-    xs.append(0.0)
-    ys.append(0.0)
-    path_line.set_data(xs, ys)
-    ax.scatter([0.0], [0.0], s=8, c="green", alpha=0.9, zorder=5)
-    fig.canvas.draw()
-    fig.canvas.flush_events()
-    plt.pause(args.delay)
+    # Keep preview focused on the traced path only (no forced return-to-origin segment).
 
     plt.ioff()
     if args.hold > 0:
