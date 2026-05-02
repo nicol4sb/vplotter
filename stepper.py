@@ -25,6 +25,10 @@ HALF_STEP_DELAY_SEC = 0.0007
 HALF_STEPS_PER_SHAFT_REV = 4096
 PULLEY_PERIMETER_MM = 23.56
 
+# If pure Y moves look horizontal, one spool steps opposite the model: set that side to -1.
+LEFT_MOTOR_STRING_SIGN = 1
+RIGHT_MOTOR_STRING_SIGN = 1
+
 # Pen state (mm, same frame as geometry.py)
 x0 = 0.0
 y0 = 0.0
@@ -91,6 +95,8 @@ def mm_to_half_steps(delta_mm: float) -> int:
 
 def turn_motors(left_mm: float, right_mm: float) -> None:
     """Bresenham-style interleaving so both spools move together in string space."""
+    left_mm *= LEFT_MOTOR_STRING_SIGN
+    right_mm *= RIGHT_MOTOR_STRING_SIGN
     left_steps = mm_to_half_steps(left_mm)
     right_steps = mm_to_half_steps(right_mm)
 
