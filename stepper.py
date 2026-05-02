@@ -8,6 +8,7 @@ On a Pi, rename/remove the repo's RPi/ stub so `import RPi.GPIO` loads the syste
 from __future__ import annotations
 
 import math
+import os
 import sys
 import time
 
@@ -25,15 +26,17 @@ HALF_STEP_DELAY_SEC = 0.0007
 HALF_STEPS_PER_SHAFT_REV = 4096
 PULLEY_PERIMETER_MM = 23.56
 
-# If pure Y moves look horizontal, one spool steps opposite the model: set that side to -1.
+# Vertical test move(0,-10): if the pen drifts sideways, set exactly ONE of these to -1 (try right first).
 LEFT_MOTOR_STRING_SIGN = 1
-RIGHT_MOTOR_STRING_SIGN = 1
+RIGHT_MOTOR_STRING_SIGN = -1
 
-# NGC/preview coords are multiplied by this before kinematics. Use -1.0 if +X and +Y on the wall
-# are opposite the matplotlib preview (both axes “inverted”).
+# If changing plot Y moves the pen along wall X (sheet rotated 90° vs preview), try True.
+SWAP_PLOT_XY = False
+
+# After optional swap: scale into kinematic frame (-1.0 mirrors both axes vs preview).
 PLOT_XY_SIGN = 1.0
 
-# Pen position in plot/preview mm (same numbers as NGC). PLOT_XY_SIGN maps to the kinematic frame.
+# Pen position in plot/preview mm (same numbers as NGC).
 x0 = 0.0
 y0 = 0.0
 
@@ -50,6 +53,12 @@ HALF_STEP_PHASES = [
 
 _phase_right = 0
 _phase_left = 0
+
+
+def _plot_to_kinematic(px: float, py: float) -> tuple[float, float]:
+    if SWAP_PLOT_XY:
+        px, py = py, px
+    return px * PLOT_XY_SIGN, py * PLOT_XY_SIGN
 
 
 def configure_gpio() -> None:
@@ -104,8 +113,20 @@ def turn_motors(left_mm: float, right_mm: float) -> None:
     left_steps = mm_to_half_steps(left_mm)
     right_steps = mm_to_half_steps(right_mm)
 
+    # Same signed step count: lockstep (avoids any Bresenham imbalance when slopes are 1:1).
+    if left_steps == right_steps != 0:
+        s = int(math.copysign(1, right_steps))
+        for _ in range(abs(right_steps)):
+            turn_motor_half_steps(s, RIGHT_MOTOR_PINS)
+            turn_motor_half_steps(s, LEFT_MOTOR_PINS)
+        return
+
     if right_steps == 0:
         turn_motor_half_steps(left_steps, LEFT_MOTOR_PINS)
+        return
+
+    if left_steps == 0:
+        turn_motor_half_steps(right_steps, RIGHT_MOTOR_PINS)
         return
 
     slope = abs(left_mm / right_mm)
@@ -126,11 +147,13 @@ def turn_motors(left_mm: float, right_mm: float) -> None:
 def move(x1: float, y1: float) -> None:
     global x0, y0
 
-    mx0, my0 = x0 * PLOT_XY_SIGN, y0 * PLOT_XY_SIGN
-    mx1, my1 = x1 * PLOT_XY_SIGN, y1 * PLOT_XY_SIGN
+    mx0, my0 = _plot_to_kinematic(x0, y0)
+    mx1, my1 = _plot_to_kinematic(x1, y1)
     print("Move (plot mm):", (x0, y0), "->", (x1, y1))
     dL = left_string_length_mm(mx1, my1) - left_string_length_mm(mx0, my0)
     dR = right_string_length_mm(mx1, my1) - right_string_length_mm(mx0, my0)
+    if os.environ.get("VPLOTTER_DEBUG"):
+        print(f"  string Δ mm: left={dL:.4f} right={dR:.4f}", flush=True)
     turn_motors(dL, dR)
     x0, y0 = x1, y1
     print("At (plot mm):", (x0, y0))
