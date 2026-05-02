@@ -33,7 +33,7 @@ RIGHT_MOTOR_STRING_SIGN = 1
 # are opposite the matplotlib preview (both axes “inverted”).
 PLOT_XY_SIGN = 1.0
 
-# Pen state (mm, same frame as geometry.py)
+# Pen position in plot/preview mm (same numbers as NGC). PLOT_XY_SIGN maps to the kinematic frame.
 x0 = 0.0
 y0 = 0.0
 
@@ -126,14 +126,14 @@ def turn_motors(left_mm: float, right_mm: float) -> None:
 def move(x1: float, y1: float) -> None:
     global x0, y0
 
-    x1 *= PLOT_XY_SIGN
-    y1 *= PLOT_XY_SIGN
-    print("Move:", (x0, y0), "->", (x1, y1))
-    dL = left_string_length_mm(x1, y1) - left_string_length_mm(x0, y0)
-    dR = right_string_length_mm(x1, y1) - right_string_length_mm(x0, y0)
+    mx0, my0 = x0 * PLOT_XY_SIGN, y0 * PLOT_XY_SIGN
+    mx1, my1 = x1 * PLOT_XY_SIGN, y1 * PLOT_XY_SIGN
+    print("Move (plot mm):", (x0, y0), "->", (x1, y1))
+    dL = left_string_length_mm(mx1, my1) - left_string_length_mm(mx0, my0)
+    dR = right_string_length_mm(mx1, my1) - right_string_length_mm(mx0, my0)
     turn_motors(dL, dR)
     x0, y0 = x1, y1
-    print("At:", (x0, y0))
+    print("At (plot mm):", (x0, y0))
 
 
 # --- Built-in tests ---
