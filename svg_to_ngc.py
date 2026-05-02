@@ -161,23 +161,46 @@ def main() -> None:
     tree = ET.parse(svg_path)
     root = tree.getroot()
 
-    # path tags can be namespaced
-    paths = root.findall(".//{http://www.w3.org/2000/svg}path") + root.findall(".//path")
+    # path tags can be namespaced; dict.fromkeys dedupes if both queries match
+    paths = list(
+        dict.fromkeys(
+            root.findall(".//{http://www.w3.org/2000/svg}path")
+            + root.findall(".//path")
+        )
+    )
     chosen = None
     for p in paths:
         if p.get("id") == args.path_id:
             chosen = p
             break
+
+    usable = [p for p in paths if p.get("d")]
     if chosen is None:
-        print(f"Path id '{args.path_id}' not found in {svg_path}", file=sys.stderr)
-        sys.exit(1)
+        if not usable:
+            print(f"No path elements with d= in {svg_path}", file=sys.stderr)
+            sys.exit(1)
+        if len(usable) == 1:
+            chosen = usable[0]
+            print(
+                f"Note: --path-id {args.path_id!r} not found; using the only path.",
+                file=sys.stderr,
+            )
+        else:
+            merged: list[tuple[float, float]] = []
+            for p in usable:
+                merged.extend(parse_path_d(p.get("d", "")))
+            if not merged:
+                print("No points parsed from SVG paths", file=sys.stderr)
+                sys.exit(1)
+            points = merged
+            chosen = None  # already have points
 
-    d = chosen.get("d")
-    if not d:
-        print(f"Path '{args.path_id}' has no d attribute", file=sys.stderr)
-        sys.exit(1)
-
-    points = parse_path_d(d)
+    if chosen is not None:
+        d = chosen.get("d")
+        if not d:
+            print("Path has no d attribute", file=sys.stderr)
+            sys.exit(1)
+        points = parse_path_d(d)
     if not points:
         print("No points parsed from SVG path", file=sys.stderr)
         sys.exit(1)
