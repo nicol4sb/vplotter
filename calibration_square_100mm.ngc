@@ -1,0 +1,12 @@
+(Calibration square: 100 mm side, centered on origin — bounding box 100x100 mm)
+(Measure each edge with a ruler: L_bottom along X, L_right along Y, etc.)
+(If average horizontal != average vertical: set in geometry.py)
+(  CALIB_SCALE_X = 100 / Lx_avg   CALIB_SCALE_Y = 100 / Ly_avg )
+(Use edges parallel to plot X for Lx and parallel to plot Y for Ly.)
+G21
+G90
+G03 X-50.000 Y-50.000
+G03 X50.000 Y-50.000
+G03 X50.000 Y50.000
+G03 X-50.000 Y50.000
+G03 X-50.000 Y-50.000

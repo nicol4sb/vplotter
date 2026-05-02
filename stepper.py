@@ -14,7 +14,12 @@ import time
 
 import RPi.GPIO as GPIO
 
-from geometry import left_string_length_mm, right_string_length_mm
+from geometry import (
+    CALIB_SCALE_X,
+    CALIB_SCALE_Y,
+    left_string_length_mm,
+    right_string_length_mm,
+)
 from points_file_reader import read_file
 
 # --- Pins (BOARD numbering) ---
@@ -58,7 +63,9 @@ _phase_left = 0
 def _plot_to_kinematic(px: float, py: float) -> tuple[float, float]:
     if SWAP_PLOT_XY:
         px, py = py, px
-    return px * PLOT_XY_SIGN, py * PLOT_XY_SIGN
+    px *= CALIB_SCALE_X * PLOT_XY_SIGN
+    py *= CALIB_SCALE_Y * PLOT_XY_SIGN
+    return px, py
 
 
 def configure_gpio() -> None:
