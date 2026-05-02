@@ -29,6 +29,10 @@ PULLEY_PERIMETER_MM = 23.56
 LEFT_MOTOR_STRING_SIGN = 1
 RIGHT_MOTOR_STRING_SIGN = 1
 
+# NGC/preview coords are multiplied by this before kinematics. Use -1.0 if +X and +Y on the wall
+# are opposite the matplotlib preview (both axes “inverted”).
+PLOT_XY_SIGN = 1.0
+
 # Pen state (mm, same frame as geometry.py)
 x0 = 0.0
 y0 = 0.0
@@ -122,6 +126,8 @@ def turn_motors(left_mm: float, right_mm: float) -> None:
 def move(x1: float, y1: float) -> None:
     global x0, y0
 
+    x1 *= PLOT_XY_SIGN
+    y1 *= PLOT_XY_SIGN
     print("Move:", (x0, y0), "->", (x1, y1))
     dL = left_string_length_mm(x1, y1) - left_string_length_mm(x0, y0)
     dR = right_string_length_mm(x1, y1) - right_string_length_mm(x0, y0)
